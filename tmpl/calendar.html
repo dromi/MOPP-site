@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+</head>
+<body>
+<h1>Calendar</h1>
+
+<form action="/action_page.php">
+    <table>
+  <tr>
+    <th>Date</th>
+    {{range .Performers}}
+    <th>{{.Name}}</th>
+    {{end}}
+  </tr>
+  {{range .Avails}}
+  <tr>
+    <td>{{.Date}}</td>
+    {{range .Available}}
+        <td>
+            <input type="checkbox" id="vehicle3" name="vehicle3" value="Boat"{{if eq . "true"}} checked {{ end }}>
+        </td>
+    {{end}}
+  </tr>
+  {{end}}
+</table>
+<input type="submit" value="Submit">
+</form>
+  
+</body>
+</html>

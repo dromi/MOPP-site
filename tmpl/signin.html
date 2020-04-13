@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<h1>Please sign in</h1>
+
+<form action="/signin" method="post">
+    <div><input type="text" placeholder="Enter Username" name="uname" required></div>
+    <div><input type="password" placeholder="Enter Password" name="psw" required></div>
+    <div><button type="submit">Login</button></div>
+    <p><font size="3" color="red">{{.}}</font></p>
+</form> 
+</body>
+</html>
