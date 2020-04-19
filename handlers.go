@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/dromi/MOPP-site/model"
 )
@@ -52,6 +52,10 @@ func performerHandler(w http.ResponseWriter, r *http.Request, m *MetaData) {
 func signinHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
+		_, err := getJWTCookie(r)
+		if err == nil {
+			http.Redirect(w, r, "/frontpage", http.StatusFound)
+		}
 		renderTemplate(w, "signin", nil)
 	case "POST":
 		name := r.FormValue("uname")
@@ -64,7 +68,7 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 					panic(err)
 				}
 				http.SetCookie(w, cookie)
-				http.Redirect(w, r, "/", http.StatusFound)
+				http.Redirect(w, r, "/frontpage", http.StatusFound)
 			} else {
 				renderTemplate(w, "signin", "Wrong username or password")
 			}
@@ -72,6 +76,20 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 			renderTemplate(w, "signin", "Wrong username or password")
 		}
 	default:
-		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
+		http.NotFound(w, r)
+	}
+}
+
+func Refresh(w http.ResponseWriter, r *http.Request) {
+	claims, err := getJWTCookie(r)
+	if err != nil {
+		return
+	}
+	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) < jwtRefreshTime {
+		cookie, err := updateJWTCookie(claims)
+		if err != nil {
+			panic(err)
+		}
+		http.SetCookie(w, cookie)
 	}
 }

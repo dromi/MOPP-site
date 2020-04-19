@@ -27,7 +27,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 }
 
 func main() {
-
 	remakeDB := flag.Bool("db", false, "recreate db")
 	newPerformer := flag.Bool("nu", false, "add new performer")
 	name := flag.String("name", "", "name for creating new performers")
@@ -44,10 +43,15 @@ func main() {
 		HashPassword(password)
 		model.AddPerformer(model.Performer{Name: *name, Password: *password})
 	default:
+		http.HandleFunc("/signin", signinHandler)
+		http.HandleFunc("/refresh", signinHandler)
 		http.HandleFunc("/calendar/", authHandler(calendarHandler))
 		http.HandleFunc("/performers/", authHandler(performerHandler))
-		http.HandleFunc("/", authHandler(frontpageHandler))
-		http.HandleFunc("/signin", signinHandler)
+		http.HandleFunc("/frontpage", authHandler(frontpageHandler))
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/signin", http.StatusFound)
+		})
+
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}
 }

@@ -3,6 +3,9 @@ package model
 import "fmt"
 
 const dbsql = `
+
+CREATE DATABASE IF NOT EXISTS mopp;
+
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -14,6 +15,8 @@ const (
 	jwtSecret      = "my_secret_key"
 	tokenName      = "mopp_token"
 )
+
+var errTokenExpired = errors.New("Token expired")
 
 type Claims struct {
 	Username string `json:"username"`
@@ -68,38 +71,42 @@ func updateJWTCookie(claims *Claims) (*http.Cookie, error) {
 	}, nil
 }
 
+func getJWTCookie(r *http.Request) (*Claims, error) {
+	c, err := r.Cookie(tokenName)
+	if err != nil {
+		return nil, err
+	}
+	tknStr := c.Value
+	claims := &Claims{}
+	tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !tkn.Valid {
+		return nil, errTokenExpired
+	}
+	return claims, nil
+}
+
 func authHandler(fn func(http.ResponseWriter, *http.Request, *MetaData)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie(tokenName)
+		claims, err := getJWTCookie(r)
 		if err != nil {
 			if err == http.ErrNoCookie {
 				http.Redirect(w, r, "/signin", http.StatusFound)
 				return
 			}
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		tknStr := c.Value
-		claims := &Claims{}
-
-		// Parse the JWT string and store the result in `claims`.
-		// Note that we are passing the key in this method as well. This method will return an error
-		// if the token is invalid (if it has expired according to the expiry time we set on sign in),
-		// or if the signature does not match
-		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
-		})
-		if err != nil {
 			if err == jwt.ErrSignatureInvalid {
 				http.Redirect(w, r, "/signin", http.StatusFound)
 				return
 			}
+			if err == errTokenExpired {
+				http.Redirect(w, r, "/signin", http.StatusFound)
+				return
+			}
 			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if !tkn.Valid {
-			http.Redirect(w, r, "/signin", http.StatusFound)
 			return
 		}
 
