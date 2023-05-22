@@ -4,22 +4,25 @@ import "fmt"
 
 const dbsql = `
 
-CREATE DATABASE IF NOT EXISTS mopp;
-
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS performer (
 	id SERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
-	password TEXT,
+	password TEXT NOT NULL,
 
 	CONSTRAINT name_unique UNIQUE (name)
 );
 
+CREATE TABLE IF NOT EXISTS  show (
+	id SERIAL PRIMARY KEY,
+	date DATE NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS  availability (
 	id SERIAL PRIMARY KEY,
-	date DATE NOT NULL,
+	show INT NOT NULL REFERENCES show(id),
 	performer INT NOT NULL REFERENCES performer(id),
 	report BOOLEAN NOT NULL
 );`
